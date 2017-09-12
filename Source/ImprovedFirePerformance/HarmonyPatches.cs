@@ -44,18 +44,6 @@ namespace NoFirewatcher
 
         public static IEnumerable<CodeInstruction> FireTickTranspiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
-            // consider traverse?
-            List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
-
-            // if structure => turns on HighPerformanceFire fixes when LargeFireDangerPresent
-            yield return new CodeInstruction(OpCodes.Ldarg_0); //this
-            yield return new CodeInstruction(OpCodes.Call, AccessTools.Property(typeof(Thing), nameof(Thing.Map)).GetGetMethod());
-            yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Map), nameof(Map.fireWatcher)));
-            yield return new CodeInstruction(OpCodes.Callvirt, AccessTools.Property(typeof(FireWatcher), nameof(FireWatcher.LargeFireDangerPresent)).GetGetMethod());
-
-            Label elseLabel = il.DefineLabel();
-            yield return new CodeInstruction(OpCodes.Brfalse, elseLabel); // branch
-
             // NOTE: having issues passing sustainer
             yield return new CodeInstruction(OpCodes.Ldarg_0); //this
             yield return new CodeInstruction(OpCodes.Ldfld, AccessTools.Field(typeof(Fire), "sustainer"));
@@ -78,16 +66,6 @@ namespace NoFirewatcher
             yield return new CodeInstruction(OpCodes.Ldflda, ticksSinceSpreadFieldInfo);
 
             yield return new CodeInstruction(OpCodes.Call, highPerformanceFireTickMethodInfo);
-
-            Label returnLabel = il.DefineLabel();
-            yield return new CodeInstruction(OpCodes.Br, returnLabel);
-
-            // handle labels
-            instructionList[0].labels.Add(elseLabel); // else
-            instructionList[instructionList.Count - 1].labels.Add(returnLabel); // end if
-
-            int i;
-            for (i = 0; i < instructionList.Count; i++) yield return instructionList[i];
         }
       
         private static FieldInfo FI_ManualRadialPattern = AccessTools.Field(typeof(GenRadial), nameof(GenRadial.ManualRadialPattern));
