@@ -7,8 +7,8 @@
     <ProjectGuid>{4C634378-99F6-4635-B0F2-2B588E770FFB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NoFirewatcher</RootNamespace>
-    <AssemblyName>NoFirewatcher</AssemblyName>
+    <RootNamespace>ImprovedFirePerformance</RootNamespace>
+    <AssemblyName>ImprovedFirePerformance</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

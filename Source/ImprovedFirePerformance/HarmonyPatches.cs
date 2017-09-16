@@ -1,34 +1,48 @@
-﻿using Harmony;
-using RimWorld;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Verse;
 using System.Reflection.Emit;
+using Verse;
 using Verse.Sound;
+using RimWorld;
+using Harmony;
 
-namespace NoFirewatcher
+namespace ImprovedFirePerformance
 {
     [StaticConstructorOnStartup]
     class HarmonyPatches
     {
+        private const string noFirewatcher_ModName = "No Firewatcher";
+        private static FieldInfo FI_ManualRadialPattern = AccessTools.Field(typeof(GenRadial), nameof(GenRadial.ManualRadialPattern));
 
         static HarmonyPatches()
         {
 #if DEBUG
             HarmonyInstance.DEBUG = true;
 #endif
-
             HarmonyInstance harmony = HarmonyInstance.Create("rimworld.whyisthat.nofirewatcher.main");
 
-            harmony.Patch(AccessTools.Method(typeof(TickManager), nameof(TickManager.DoSingleTick)), new HarmonyMethod(typeof(HarmonyPatches), nameof(TickManagerPrefix)), null);
-            harmony.Patch(AccessTools.Method(typeof(Fire), nameof(Fire.Tick)), null, null, new HarmonyMethod(typeof(HarmonyPatches), nameof(FireTickTranspiler)));
-
-            harmony.Patch(AccessTools.Method(typeof(Fire), "TrySpread"), null, null, new HarmonyMethod(typeof(HarmonyPatches), nameof(TrySpread_ManualRadialPatternRangeFix)));
-
+            harmony.Patch(AccessTools.Method(typeof(UIRoot_Entry), nameof(UIRoot_Entry.Init)), null, new HarmonyMethod(typeof(HarmonyPatches), nameof(DefsLoaded)));
 #if DEBUG
             harmony.Patch(AccessTools.Method(typeof(Game), nameof(Game.UpdatePlay)), new HarmonyMethod(typeof(HarmonyPatches), nameof(StartWatch)), new HarmonyMethod(typeof(HarmonyPatches), nameof(StopWatch)));
 #endif
+        }
+
+        // NOTE: this occurs before HugsLib's DefsLoadded... but the defs are loaded...
+        public static void DefsLoaded()
+        {
+            if (ModLister.AllInstalledMods.FirstOrDefault(m => m.Name == noFirewatcher_ModName)?.Active == true)
+            {
+                Log.Message("ImprovedFirePerformance: NoFirewatcher Detected -> this mod is not necessary.");
+            }
+            else
+            {
+                HarmonyInstance harmony = HarmonyInstance.Create("rimworld.whyisthat.nofirewatcher.dynamic");
+                harmony.Patch(AccessTools.Method(typeof(TickManager), nameof(TickManager.DoSingleTick)), new HarmonyMethod(typeof(HarmonyPatches), nameof(TickManagerPrefix)), null);
+                harmony.Patch(AccessTools.Method(typeof(Fire), nameof(Fire.Tick)), null, null, new HarmonyMethod(typeof(HarmonyPatches), nameof(FireTickTranspiler)));
+                harmony.Patch(AccessTools.Method(typeof(Fire), "TrySpread"), null, null, new HarmonyMethod(typeof(HarmonyPatches), nameof(TrySpread_ManualRadialPatternRangeFix)));
+            }
         }
 
         public static void TickManagerPrefix()
@@ -68,7 +82,6 @@ namespace NoFirewatcher
             yield return new CodeInstruction(OpCodes.Call, highPerformanceFireTickMethodInfo);
         }
       
-        private static FieldInfo FI_ManualRadialPattern = AccessTools.Field(typeof(GenRadial), nameof(GenRadial.ManualRadialPattern));
         public static IEnumerable<CodeInstruction> TrySpread_ManualRadialPatternRangeFix(IEnumerable<CodeInstruction> instructions)
         {
             List<CodeInstruction> instructionList = instructions.ToList<CodeInstruction>();
