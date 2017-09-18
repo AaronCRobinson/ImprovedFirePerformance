@@ -73,26 +73,30 @@ namespace ImprovedFirePerformance
                         ticksUntilSmoke = SmokeIntervalRangeLerp(num);
                     }
 
-                    // NOTE: only applies if parent not null so being moved here.
-                    ticksSinceSpawn++;
-                    if (ticksSinceSpawn >= TicksToBurnFloor)
-                    {
-                        // RimWorld.Fire.TryMakeFloorBurned()
-                        curTerrain = f.Position.GetTerrain(map);
-                        TerrainDef burnedDef = curTerrain?.burnedDef;
-
-                        if (burnedDef != null && curTerrain.Flammable())
-                        {
-                            TerrainGrid terrainGrid = map.terrainGrid;
-                            terrainGrid.RemoveTopLayer(f.Position, false);
-                            terrainGrid.SetTerrain(f.Position, burnedDef);
-                        }
-                    }
                 }     
                 else
                 {
                     f.DoComplexParentedCalcs();
                 }     
+            }
+
+            // TODO: find a better way to do this.
+            if (f.parent == null)
+            {
+                ticksSinceSpawn++;
+                if(ticksSinceSpawn >= TicksToBurnFloor)
+                {
+                    // RimWorld.Fire.TryMakeFloorBurned()
+                    curTerrain = f.Position.GetTerrain(map);
+                    TerrainDef burnedDef = curTerrain?.burnedDef;
+
+                    if (burnedDef != null && curTerrain.Flammable())
+                    {
+                        TerrainGrid terrainGrid = map.terrainGrid;
+                        terrainGrid.RemoveTopLayer(f.Position, false);
+                        terrainGrid.SetTerrain(f.Position, burnedDef);
+                    }
+                }
             }
         }
 
@@ -195,7 +199,7 @@ namespace ImprovedFirePerformance
             if (Rand.Value > 0.9f) ImpactSoundUtility.PlayImpactSound(f, DamageDefOf.Extinguish.impactSoundType, f.Map);
 
             //public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
-            f.fireSize -= 0.1f;
+            f.fireSize -= 0.1f * f.Map.weatherManager.RainRate; // FEATURE: uses rainrate when extinguishing fire
             if (f.fireSize <= MinFireSize) f.Destroy(DestroyMode.Vanish);
         }
 
