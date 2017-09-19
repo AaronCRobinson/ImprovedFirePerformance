@@ -199,7 +199,7 @@ namespace ImprovedFirePerformance
             if (Rand.Value > 0.9f) ImpactSoundUtility.PlayImpactSound(f, DamageDefOf.Extinguish.impactSoundType, f.Map);
 
             //public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
-            f.fireSize -= 0.1f * f.Map.weatherManager.RainRate; // FEATURE: uses rainrate when extinguishing fire
+            f.fireSize -= 0.1f;
             if (f.fireSize <= MinFireSize) f.Destroy(DestroyMode.Vanish);
         }
 
